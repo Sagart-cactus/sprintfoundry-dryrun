@@ -1,0 +1,110 @@
+{
+  "summary": {
+    "total": 106,
+    "passed": 106,
+    "failed": 0,
+    "skipped": 0
+  },
+  "build": {
+    "status": "passed",
+    "command": "npm run build",
+    "notes": "Next.js 16 Turbopack build completed cleanly. TypeScript checks passed. 2 static routes generated (/ and /_not-found). Re-verified after step-903 CTA href fix."
+  },
+  "test_files": [
+    {
+      "file": "tests/unit/pricing.test.ts",
+      "tests": 15,
+      "passed": 15,
+      "description": "Pricing tiers data validation — 3 tiers, billing toggle, highlight/badge, CTA labels, feature lists"
+    },
+    {
+      "file": "tests/unit/agents.test.ts",
+      "tests": 9,
+      "passed": 9,
+      "description": "6 agent types validation — distinct IDs, accent colors, names, taglines, orbit diagram geometry"
+    },
+    {
+      "file": "tests/unit/stats-countup.test.ts",
+      "tests": 9,
+      "passed": 9,
+      "description": "StatsBanner count-up easing logic and display formatting"
+    },
+    {
+      "file": "tests/unit/navigation.test.ts",
+      "tests": 14,
+      "passed": 14,
+      "description": "Navigation link targets, section IDs, HowItWorks pipeline steps"
+    },
+    {
+      "file": "tests/unit/source-structure.test.ts",
+      "tests": 36,
+      "passed": 36,
+      "description": "Static source analysis — section IDs in components, dark theme tokens, ARIA attributes, keyboard support, use-client boundaries, layout metadata"
+    },
+    {
+      "file": "tests/unit/watch-demo.test.ts",
+      "tests": 6,
+      "passed": 6,
+      "description": "Watch Demo button: onClick handler, smooth scroll to #how-it-works, button type"
+    },
+    {
+      "file": "tests/unit/focus-trap.test.ts",
+      "tests": 13,
+      "passed": 13,
+      "description": "Mobile nav focus trap: drawerRef, hamburgerRef, Tab/Shift+Tab cycling, Escape key, focus return, aria-hidden exclusion, role=dialog"
+    },
+    {
+      "file": "tests/unit/pricing-cta-hrefs.test.ts",
+      "tests": 4,
+      "passed": 4,
+      "description": "Pricing CTA href targets per spec US-3: /signup, /signup?plan=pro, /contact — also verifies no '#' placeholder remains"
+    }
+  ],
+  "failures": [],
+  "checked_requirements": {
+    "all_required_sections_present": {
+      "result": "PASS",
+      "details": "hero, features, how-it-works, and pricing sections all present with correct IDs"
+    },
+    "six_agent_types_with_distinct_styling": {
+      "result": "PASS",
+      "details": "Product (#7C3AED), Architecture (#0EA5E9), Developer (#10B981), QA (#F59E0B), Security (#EF4444), DevOps (#EC4899) — all with unique accent colors in both FeaturesSection and AgentOrbitDiagram"
+    },
+    "pricing_three_tiers": {
+      "result": "PASS",
+      "details": "Free ($0), Pro ($79/mo or $63/mo annual), Enterprise (Custom) — all present. Prices match canonical spec from product-spec.md."
+    },
+    "build_without_errors": {
+      "result": "PASS",
+      "details": "pnpm build succeeded with no TypeScript errors, no compilation errors"
+    },
+    "responsive_layout": {
+      "result": "PASS (static analysis)",
+      "details": "Responsive classes confirmed in source: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 for features; md:grid-cols-4 for stats (2x2 on mobile); md:grid-cols-3 for pricing; lg:grid-cols-4 for how-it-works; mobile hamburger hidden md:flex for desktop nav"
+    },
+    "no_console_errors_or_missing_imports": {
+      "result": "PASS",
+      "details": "TypeScript build passes cleanly. All imports resolved. No missing components. framer-motion installed but unused (no error — dead dependency)."
+    },
+    "dark_theme_consistent": {
+      "result": "PASS",
+      "details": "Background #0A0B0E consistently applied. @theme tokens defined in globals.css. Dark palette used throughout all components."
+    },
+    "navigation_links_functional": {
+      "result": "PASS",
+      "details": "Anchor links (#features, #how-it-works, #pricing) all point to valid section IDs. Watch Demo scrolls to #how-it-works. Mobile focus trap implemented with Tab/Shift+Tab cycling, Escape, and focus return."
+    },
+    "pricing_cta_hrefs": {
+      "result": "PASS",
+      "details": "All three pricing CTAs have correct hrefs per spec US-3: Free → /signup, Pro → /signup?plan=pro, Enterprise → /contact. No '#' placeholders remain. 4/4 tests pass."
+    }
+  },
+  "regressions": [],
+  "notes": [
+    "Watch Demo fix verified: onClick handler smooth-scrolls to #how-it-works section (6/6 tests pass)",
+    "Mobile focus trap fix verified: Full implementation including Tab/Shift+Tab, Escape, wasOpenRef guard, aria-hidden exclusion (13/13 tests pass)",
+    "Pricing spec now resolved: $79/mo Pro canonical (product-spec.md). Implementation matches. Pricing amount tests pass.",
+    "RESOLVED: Pricing CTA hrefs fixed by developer (step-903). Free → /signup, Pro → /signup?plan=pro, Enterprise → /contact. 4/4 new tests pass.",
+    "Build re-verified post-fix: npm run build completes cleanly, TypeScript checks pass."
+  ]
+}

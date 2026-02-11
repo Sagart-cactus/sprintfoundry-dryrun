@@ -1,0 +1,41 @@
+{
+  "classification": "new_feature",
+  "reasoning": "This ticket requests a new marketing website for the SprintFoundry product. The requirements are clear and detailed with specific sections defined, so no product agent is needed. The work is purely frontend/UI with a new folder structure, requiring UI/UX design followed by developer implementation and QA validation.",
+  "steps": [
+    {
+      "step_number": 1,
+      "agent": "ui-ux",
+      "task": "Design the SprintFoundry marketing website for the website-v1 folder. Create component specs and wireframes for: (1) Hero section with animated agent workflow visualization showing agents collaborating, (2) Features section highlighting 6 agent types (Product, Architecture, Developer, QA, Security, DevOps) each with a distinct accent color, (3) How It Works section illustrating the ticket-to-PR pipeline as a step-by-step flow, (4) Pricing section with Free/Pro/Enterprise tiers and feature comparison, (5) Modern dark theme design system with agent-specific accent colors. Define the color palette, typography, component hierarchy, and animation specifications.",
+      "context_inputs": [
+        { "type": "ticket" }
+      ],
+      "depends_on": [],
+      "estimated_complexity": "medium"
+    },
+    {
+      "step_number": 2,
+      "agent": "developer",
+      "task": "Build the SprintFoundry marketing website in a new website-v1 folder. Use Next.js with TypeScript and Tailwind CSS. Implement: (1) Hero section with CSS/Framer Motion animated visualization of agents receiving a ticket and producing a PR, (2) Features section with 6 agent cards (Product, Architecture, Developer, QA, Security, DevOps) each with distinct accent colors — use purple for product, blue for architect, green for developer, yellow for QA, red for security, orange for DevOps, (3) How It Works section showing the 5-step ticket-to-PR pipeline with connecting arrows/flow, (4) Pricing section with three tiers: Free (solo devs, 10 tickets/mo), Pro ($49/mo, 200 tickets, all agents), Enterprise (custom, unlimited, SSO), (5) Dark theme (#0a0a0f background, agent accent colors for highlights), responsive layout, smooth scroll navigation header. Initialize a standalone Next.js project with its own package.json inside website-v1/.",
+      "context_inputs": [
+        { "type": "ticket" },
+        { "type": "step_output", "step_number": 1 }
+      ],
+      "depends_on": [1],
+      "estimated_complexity": "high"
+    },
+    {
+      "step_number": 3,
+      "agent": "qa",
+      "task": "Validate the SprintFoundry marketing website in website-v1. Check: (1) All required sections are present (hero, features, how-it-works, pricing), (2) All 6 agent types are represented in the features section with distinct styling, (3) Pricing section has all three tiers (Free, Pro, Enterprise), (4) The site builds without errors (run npm run build), (5) Responsive layout renders correctly at mobile (375px), tablet (768px), and desktop (1440px) breakpoints, (6) No console errors or missing imports, (7) Dark theme is consistently applied, (8) Navigation links are functional. Report any bugs found.",
+      "context_inputs": [
+        { "type": "ticket" },
+        { "type": "step_output", "step_number": 2 },
+        { "type": "file", "path": "website-v1/" }
+      ],
+      "depends_on": [2],
+      "estimated_complexity": "low"
+    }
+  ],
+  "parallel_groups": [],
+  "human_gates": []
+}

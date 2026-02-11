@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base colors */
+  --color-bg-primary: #0A0B0E;
+  --color-bg-surface: #111318;
+  --color-bg-elevated: #1A1D25;
+  --color-bg-overlay: #242836;
+  --color-border-subtle: #1F2330;
+  --color-border-default: #2D3245;
+  --color-border-strong: #3D4460;
+
+  /* Text colors */
+  --color-text-primary: #F0F2F8;
+  --color-text-secondary: #8B91A8;
+  --color-text-muted: #555C72;
+
+  /* Brand primary */
+  --color-primary-400: #818CF8;
+  --color-primary-500: #6366F1;
+  --color-primary-600: #4F46E5;
+  --color-primary-muted: #111827;
+
+  /* Agent colors */
+  --color-agent-product: #7C3AED;
+  --color-agent-product-muted: #1A1030;
+  --color-agent-architect: #0EA5E9;
+  --color-agent-architect-muted: #071525;
+  --color-agent-developer: #10B981;
+  --color-agent-developer-muted: #071A14;
+  --color-agent-qa: #F59E0B;
+  --color-agent-qa-muted: #1C1507;
+  --color-agent-security: #EF4444;
+  --color-agent-security-muted: #1C0707;
+  --color-agent-devops: #EC4899;
+  --color-agent-devops-muted: #1C0712;
+
+  /* Functional */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0A0B0E;
+  color: #F0F2F8;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes flow-dash {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes blob-drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+@keyframes ticket-travel {
+  0% {
+    opacity: 0;
+    transform: translate(-60px, -60px) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(60px, 60px) scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
