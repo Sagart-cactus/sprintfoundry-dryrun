@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "failures": [],
+  "coverage": {
+    "statements": 0,
+    "branches": 0,
+    "functions": 0,
+    "lines": 0
+  },
+  "regressions": [],
+  "notes": [
+    "Ticket-scoped QA validation only: file existence and exact byte content for x.txt.",
+    "Referenced spec files artifacts/product-spec.md, artifacts/user-stories.md, and artifacts/api-contracts.yaml were not present in this workspace."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "summary": "Validated ticket requirement: x.txt exists and contains exactly 'x' (1 byte, hex 78).",
+  "artifacts_created": [
+    "artifacts/test-report.json",
+    "artifacts/bugs.md"
+  ],
+  "artifacts_modified": [
+    ".agent-result.json"
+  ],
+  "issues": [
+    "Referenced QA inputs artifacts/product-spec.md, artifacts/user-stories.md, and artifacts/api-contracts.yaml were missing from the workspace."
+  ],
+  "rework_reason": "",
+  "rework_target": "",
+  "metadata": {
+    "checks": {
+      "file_exists": true,
+      "content": "x",
+      "byte_count": 1,
+      "hex": "78"
+    },
+    "tests_total": 3,
+    "tests_passed": 3,
+    "tests_failed": 0
+  }
+}
