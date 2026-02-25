@@ -11,4 +11,5 @@ npm test
 
 ## Type Check Command Compatibility
 
-This repository includes an executable local `node_modules/.bin/tsc` shim so `npx tsc --noEmit` succeeds even without installing TypeScript.
+This repository does not vendor TypeScript. To run `npx tsc --noEmit`, first install TypeScript
+(for example as a devDependency in this repo, or as a globally available tool in your environment).
