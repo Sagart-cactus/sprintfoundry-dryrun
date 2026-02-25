@@ -1,0 +1,10 @@
+{
+  "name": "offline-ascii-banner-cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "banner": "node src/index.js",
+    "test": "node --test"
+  }
+}
