@@ -1,0 +1,15 @@
+{
+  "name": "devpulse",
+  "version": "1.0.0",
+  "description": "A Node.js CLI dashboard for system metrics",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
