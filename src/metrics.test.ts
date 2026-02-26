@@ -1,44 +1,89 @@
-import { describe, it, expect } from 'vitest';
-import { takeCpuSample, calculateCpuPercent, getMemoryMetrics } from './metrics';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('calculateCpuPercent', () => {
-  it('returns 0 when total diff is zero', () => {
-    const sample = { idle: 100, total: 200 };
-    expect(calculateCpuPercent(sample, sample)).toBe(0);
+const {
+  mockCpus,
+  mockTotalmem,
+  mockFreemem,
+  mockUptime,
+  mockExecSync,
+} = vi.hoisted(() => ({
+  mockCpus: vi.fn(),
+  mockTotalmem: vi.fn(),
+  mockFreemem: vi.fn(),
+  mockUptime: vi.fn(),
+  mockExecSync: vi.fn(),
+}));
+
+vi.mock('os', () => ({
+  cpus: mockCpus,
+  totalmem: mockTotalmem,
+  freemem: mockFreemem,
+  uptime: mockUptime,
+}));
+
+vi.mock('child_process', () => ({
+  execSync: mockExecSync,
+}));
+
+import { calculateCpuPercent, collectMetrics, takeCpuSample } from './metrics';
+
+describe('metrics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('returns correct percentage', () => {
-    const sample1 = { idle: 800, total: 1000 };
-    const sample2 = { idle: 850, total: 1100 };
-    const percent = calculateCpuPercent(sample1, sample2);
-    expect(percent).toBe(50);
+  it('calculates CPU usage percent from mocked idle/total CPU times', () => {
+    mockCpus
+      .mockReturnValueOnce([
+        { times: { user: 100, nice: 0, sys: 50, idle: 850, irq: 0 } },
+        { times: { user: 200, nice: 0, sys: 100, idle: 1700, irq: 0 } },
+      ])
+      .mockReturnValueOnce([
+        { times: { user: 120, nice: 0, sys: 70, idle: 860, irq: 0 } },
+        { times: { user: 230, nice: 0, sys: 130, idle: 1710, irq: 0 } },
+      ]);
+
+    const sample1 = takeCpuSample();
+    const sample2 = takeCpuSample();
+
+    const cpuPercent = calculateCpuPercent(sample1, sample2);
+
+    expect(sample1).toEqual({ idle: 2550, total: 3000 });
+    expect(sample2).toEqual({ idle: 2570, total: 3120 });
+    expect(cpuPercent).toBe(83);
   });
 
-  it('clamps result between 0 and 100', () => {
-    const sample1 = { idle: 0, total: 0 };
-    const sample2 = { idle: 0, total: 100 };
-    const percent = calculateCpuPercent(sample1, sample2);
-    expect(percent).toBeGreaterThanOrEqual(0);
-    expect(percent).toBeLessThanOrEqual(100);
-  });
-});
+  it('derives memory used from totalmem - freemem and passes uptime through', () => {
+    mockTotalmem.mockReturnValue(16 * 1024 ** 3);
+    mockFreemem.mockReturnValue(6 * 1024 ** 3);
+    mockUptime.mockReturnValue(12345);
+    mockExecSync.mockReturnValue('USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND\n');
 
-describe('takeCpuSample', () => {
-  it('returns a sample with idle and total', () => {
-    const sample = takeCpuSample();
-    expect(sample.idle).toBeGreaterThan(0);
-    expect(sample.total).toBeGreaterThan(0);
-    expect(sample.total).toBeGreaterThanOrEqual(sample.idle);
-  });
-});
+    const metrics = collectMetrics(42);
 
-describe('getMemoryMetrics', () => {
-  it('returns positive memory values', () => {
-    const mem = getMemoryMetrics();
-    expect(mem.totalGB).toBeGreaterThan(0);
-    expect(mem.usedGB).toBeGreaterThan(0);
-    expect(mem.usedGB).toBeLessThanOrEqual(mem.totalGB);
-    expect(mem.percent).toBeGreaterThan(0);
-    expect(mem.percent).toBeLessThanOrEqual(100);
+    expect(metrics.memTotalGB).toBe(16);
+    expect(metrics.memUsedGB).toBe(10);
+    expect(metrics.memPercent).toBe(63);
+    expect(metrics.uptimeSeconds).toBe(12345);
+  });
+
+  it('sorts top processes by CPU and limits to top 3', () => {
+    mockTotalmem.mockReturnValue(8 * 1024 ** 3);
+    mockFreemem.mockReturnValue(4 * 1024 ** 3);
+    mockUptime.mockReturnValue(99);
+    mockExecSync.mockReturnValue([
+      'USER       PID  %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND',
+      'alice      100   0.5  0.1 123456  1000 ??       S     10:00   0:01 /bin/a',
+      'bob        101  15.3  0.2 123456  1000 ??       S     10:00   0:02 /bin/b',
+      'carol      102   7.8  0.3 123456  1000 ??       S     10:00   0:03 /bin/c',
+      'dave       103  50.1  0.4 123456  1000 ??       S     10:00   0:04 /bin/d',
+      'erin       104  22.4  0.5 123456  1000 ??       S     10:00   0:05 /bin/e',
+    ].join('\n'));
+
+    const metrics = collectMetrics(10);
+
+    expect(metrics.topProcesses).toHaveLength(3);
+    expect(metrics.topProcesses.map(p => p.pid)).toEqual(['103', '104', '101']);
+    expect(metrics.topProcesses.map(p => p.cpu)).toEqual([50.1, 22.4, 15.3]);
   });
 });
