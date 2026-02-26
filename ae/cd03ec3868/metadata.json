@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "aecd03ec3868",
+  "strategy": "manual-commit",
+  "branch": "feat/prompt-1772123321236-create-a-single-file-hello-js-that-prints-hello-fr",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".agent-result.json",
+    "hello.js"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ae/cd03ec3868/0/metadata.json",
+      "transcript": "/ae/cd03ec3868/0/full.jsonl",
+      "context": "/ae/cd03ec3868/0/context.md",
+      "content_hash": "/ae/cd03ec3868/0/content_hash.txt",
+      "prompt": "/ae/cd03ec3868/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 10132,
+    "cache_read_tokens": 146900,
+    "output_tokens": 1015,
+    "api_call_count": 6
+  }
+}

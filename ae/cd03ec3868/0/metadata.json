@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "aecd03ec3868",
+  "session_id": "e4508ff3-28ef-4b35-ae77-ea5fce99a4fd",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-26T16:30:06.580249Z",
+  "branch": "feat/prompt-1772123321236-create-a-single-file-hello-js-that-prints-hello-fr",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".agent-result.json",
+    "hello.js"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 10132,
+    "cache_read_tokens": 146900,
+    "output_tokens": 1015,
+    "api_call_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-26T16:30:06.527308Z",
+    "agent_lines": 1,
+    "human_added": 702,
+    "human_modified": 18,
+    "human_removed": 0,
+    "total_committed": 721,
+    "agent_percentage": 0.13869625520110956
+  },
+  "transcript_path": ".claude/projects/-private-var-folders-3h-qx4txpps3ps2sfy2bwc4-wlh0000gn-T-sprintfoundry-demo-terminal-run-1772123321237-yul6ef/e4508ff3-28ef-4b35-ae77-ea5fce99a4fd.jsonl"
+}
