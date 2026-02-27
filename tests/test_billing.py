@@ -1,6 +1,6 @@
 import unittest
 
-from auth_billing.billing import AuthorizationError, BillingService
+from auth_billing.billing import AuthorizationError, BillingService, BillingThrottledError
 from auth_billing.idempotency import IdempotencyConflict
 from auth_billing.models import ActorContext
 
@@ -77,6 +77,15 @@ class BillingServiceTests(unittest.TestCase):
                 mfa_passed=True,
             )
 
+    def test_idempotency_key_max_length_enforced(self) -> None:
+        with self.assertRaises(ValueError):
+            self.service.add_payment_method(
+                actor=self.writer,
+                idempotency_key="x" * 129,
+                provider_token="provider-token",
+                mfa_passed=True,
+            )
+
     def test_cross_tenant_subscription_cancel_is_denied(self) -> None:
         subscription = self.service.create_subscription(tenant_id="tenant-a")
 
@@ -115,6 +124,23 @@ class BillingServiceTests(unittest.TestCase):
         self.assertIn("billing.payment_method.added", event_types)
         self.assertIn("billing.payment_method.deleted", event_types)
         self.assertIn("billing.subscription.canceled", event_types)
+
+    def test_billing_mutation_rate_limit_by_user(self) -> None:
+        for i in range(30):
+            self.service.add_payment_method(
+                actor=self.writer,
+                idempotency_key=f"user-rate-key-{i:03d}".ljust(16, "0"),
+                provider_token=f"provider-token-{i}",
+                mfa_passed=True,
+            )
+
+        with self.assertRaises(BillingThrottledError):
+            self.service.add_payment_method(
+                actor=self.writer,
+                idempotency_key="user-rate-key-overflow".ljust(16, "0"),
+                provider_token="provider-token-overflow",
+                mfa_passed=True,
+            )
 
 
 if __name__ == "__main__":

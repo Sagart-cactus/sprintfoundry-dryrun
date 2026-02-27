@@ -1,6 +1,6 @@
 import unittest
 
-from auth_billing.auth import AuthError, AuthSessionService, RefreshReuseDetected
+from auth_billing.auth import AuthError, AuthSessionService, AuthThrottledError, RefreshReuseDetected
 
 
 class AuthSessionServiceTests(unittest.TestCase):
@@ -33,6 +33,25 @@ class AuthSessionServiceTests(unittest.TestCase):
 
         with self.assertRaises(AuthError):
             service.refresh(token)
+
+    def test_refresh_rate_limit_by_ip(self) -> None:
+        service = AuthSessionService()
+        malformed_token = "invalid-token"
+
+        for _ in range(5):
+            with self.assertRaises(AuthError):
+                service.refresh(
+                    malformed_token,
+                    source_ip="192.0.2.10",
+                    account_identifier="user-1",
+                )
+
+        with self.assertRaises(AuthThrottledError):
+            service.refresh(
+                malformed_token,
+                source_ip="192.0.2.10",
+                account_identifier="user-1",
+            )
 
 
 if __name__ == "__main__":

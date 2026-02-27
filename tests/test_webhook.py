@@ -4,7 +4,7 @@ import unittest
 from hashlib import sha256
 from time import time
 
-from auth_billing.webhook import WebhookIngestService, WebhookVerificationError
+from auth_billing.webhook import WebhookIngestService, WebhookThrottledError, WebhookVerificationError
 
 
 def make_signature(secret: str, body: str, ts: int) -> str:
@@ -60,6 +60,30 @@ class WebhookIngestServiceTests(unittest.TestCase):
 
         with self.assertRaisesRegex(WebhookVerificationError, "Malformed payload"):
             service.ingest(sig, body)
+
+    def test_out_of_range_numeric_timestamp_rejected(self) -> None:
+        service = WebhookIngestService(signing_secret="whsec_test")
+        body = json.dumps({"id": "evt_6", "type": "invoice.paid"})
+        huge_ts = 10**30
+        sig = make_signature("whsec_test", body, huge_ts)
+
+        with self.assertRaisesRegex(WebhookVerificationError, "Malformed signature header"):
+            service.ingest(sig, body)
+
+    def test_webhook_rate_limit_by_source_ip(self) -> None:
+        service = WebhookIngestService(signing_secret="whsec_test")
+        source_ip = "198.51.100.8"
+
+        for i in range(300):
+            body = json.dumps({"id": f"evt_rate_{i}", "type": "invoice.paid"})
+            ts = int(time())
+            sig = make_signature("whsec_test", body, ts)
+            service.ingest(sig, body, source_ip=source_ip)
+
+        overflow_body = json.dumps({"id": "evt_rate_overflow", "type": "invoice.paid"})
+        overflow_sig = make_signature("whsec_test", overflow_body, int(time()))
+        with self.assertRaises(WebhookThrottledError):
+            service.ingest(overflow_sig, overflow_body, source_ip=source_ip)
 
 
 if __name__ == "__main__":

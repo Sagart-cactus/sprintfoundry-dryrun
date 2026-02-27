@@ -28,6 +28,8 @@ class IdempotencyStore:
     def execute(self, scope: str, key: str, fingerprint: str, callback: Callable[[], T]) -> tuple[T, bool]:
         if len(key) < 16:
             raise ValueError("Idempotency-Key must be at least 16 characters")
+        if len(key) > 128:
+            raise ValueError("Idempotency-Key must be at most 128 characters")
 
         now = datetime.utcnow()
         self._evict(now)

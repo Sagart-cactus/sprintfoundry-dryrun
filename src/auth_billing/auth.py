@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hmac
 import hashlib
 import secrets
 from datetime import datetime, timedelta
 from uuid import uuid4
 
 from .models import RefreshTokenRecord
+from .rate_limit import FixedWindowRateLimiter, RateLimitRule, ThrottledError
 
 
 class AuthError(Exception):
@@ -16,25 +18,47 @@ class RefreshReuseDetected(AuthError):
     pass
 
 
+class AuthThrottledError(AuthError):
+    pass
+
+
 class AuthSessionService:
     """Handles refresh token issuance, rotation, and token-family revocation."""
 
-    def __init__(self, refresh_ttl_seconds: int = 60 * 60 * 24 * 7) -> None:
+    def __init__(
+        self,
+        refresh_ttl_seconds: int = 60 * 60 * 24 * 7,
+        rate_limiter: FixedWindowRateLimiter | None = None,
+    ) -> None:
         self.refresh_ttl = timedelta(seconds=refresh_ttl_seconds)
         self._records_by_id: dict[str, RefreshTokenRecord] = {}
         self._family_index: dict[str, set[str]] = {}
+        self.rate_limiter = rate_limiter or FixedWindowRateLimiter()
+        self._auth_by_ip_rule = RateLimitRule(limit=5, window_seconds=60)
+        self._auth_by_account_rule = RateLimitRule(limit=10, window_seconds=60)
 
     def issue_refresh_token(self, user_id: str, tenant_id: str) -> str:
         return self._create_token(user_id=user_id, tenant_id=tenant_id, family_id=str(uuid4()))
 
-    def refresh(self, refresh_token: str) -> dict[str, str | int]:
+    def refresh(
+        self,
+        refresh_token: str,
+        source_ip: str = "unknown",
+        account_identifier: str = "unknown",
+    ) -> dict[str, str | int]:
+        self._enforce_auth_rate_limit(scope="auth:refresh:ip", key=source_ip, by_ip=True)
+        self._enforce_auth_rate_limit(
+            scope="auth:refresh:account",
+            key=account_identifier,
+            by_ip=False,
+        )
         record, secret = self._get_record_and_secret(refresh_token)
 
         if record.expires_at <= datetime.utcnow():
             raise AuthError("Refresh token expired")
 
         expected = self._hash_secret(secret, record.salt)
-        if expected != record.token_hash:
+        if not hmac.compare_digest(expected, record.token_hash):
             raise AuthError("Refresh token invalid")
 
         if record.rotated_to is not None:
@@ -59,7 +83,18 @@ class AuthSessionService:
             "expires_in": 900,
         }
 
-    def logout(self, refresh_token: str) -> None:
+    def logout(
+        self,
+        refresh_token: str,
+        source_ip: str = "unknown",
+        account_identifier: str = "unknown",
+    ) -> None:
+        self._enforce_auth_rate_limit(scope="auth:logout:ip", key=source_ip, by_ip=True)
+        self._enforce_auth_rate_limit(
+            scope="auth:logout:account",
+            key=account_identifier,
+            by_ip=False,
+        )
         record, _ = self._parse_and_validate(refresh_token)
         record.revoked = True
 
@@ -103,10 +138,17 @@ class AuthSessionService:
             raise AuthError("Refresh token expired")
 
         expected = self._hash_secret(secret, record.salt)
-        if expected != record.token_hash:
+        if not hmac.compare_digest(expected, record.token_hash):
             raise AuthError("Refresh token invalid")
 
         return record, secret
+
+    def _enforce_auth_rate_limit(self, scope: str, key: str, by_ip: bool) -> None:
+        rule = self._auth_by_ip_rule if by_ip else self._auth_by_account_rule
+        try:
+            self.rate_limiter.enforce(scope=scope, key=key, rule=rule)
+        except ThrottledError as exc:
+            raise AuthThrottledError("AUTH_RATE_LIMITED") from exc
 
     def _revoke_family(self, family_id: str) -> None:
         for token_id in self._family_index.get(family_id, set()):

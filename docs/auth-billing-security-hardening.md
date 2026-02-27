@@ -34,9 +34,16 @@
 ## Security Model
 - Refresh tokens are rotated on every refresh.
 - Reuse of a rotated refresh token revokes the full token family.
+- Auth refresh/logout rate limits are enforced at service boundaries:
+  - `5/min` per source IP
+  - `10/min` per account identifier
 - Billing writes require explicit role permissions and tenant + owner checks.
+- Billing mutation rate limits are enforced at service boundaries:
+  - `30/min` per user
+  - `120/min` per tenant
 - High-risk billing mutations require MFA step-up.
-- Webhooks require HMAC signature validation, timestamp tolerance checks, and event-ID dedupe.
+- Webhooks require HMAC signature validation, timestamp tolerance checks, event-ID dedupe, and `300/min` per source-IP ingest throttling.
+- Malformed webhook signatures and payloads (including out-of-range numeric timestamps) are normalized to controlled verification errors.
 
 ## Incident Response
 - If webhook replay/flood is detected: enforce IP controls, keep signature verification strict, review dedupe metrics.

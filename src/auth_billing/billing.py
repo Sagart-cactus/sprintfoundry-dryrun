@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from .idempotency import IdempotencyStore
 from .models import ActorContext, AuditEvent, PaymentMethod, Subscription
+from .rate_limit import FixedWindowRateLimiter, RateLimitRule, ThrottledError
 
 
 class BillingError(Exception):
@@ -20,11 +21,22 @@ class NotFoundError(BillingError):
     pass
 
 
+class BillingThrottledError(BillingError):
+    pass
+
+
 class BillingService:
     """Applies permission checks, tenant scoping, idempotency, and audit logging."""
 
-    def __init__(self, idempotency_store: IdempotencyStore | None = None) -> None:
+    def __init__(
+        self,
+        idempotency_store: IdempotencyStore | None = None,
+        rate_limiter: FixedWindowRateLimiter | None = None,
+    ) -> None:
         self.idempotency_store = idempotency_store or IdempotencyStore()
+        self.rate_limiter = rate_limiter or FixedWindowRateLimiter()
+        self._per_user_mutation_rule = RateLimitRule(limit=30, window_seconds=60)
+        self._per_tenant_mutation_rule = RateLimitRule(limit=120, window_seconds=60)
         self.payment_methods: dict[str, PaymentMethod] = {}
         self.subscriptions: dict[str, Subscription] = {}
         self.audit_events: list[AuditEvent] = []
@@ -42,6 +54,7 @@ class BillingService:
         set_default: bool = False,
         mfa_passed: bool = False,
     ) -> dict[str, str | bool]:
+        self._enforce_mutation_rate_limits(actor)
         self._require_permission(actor, "billing:write")
         if not mfa_passed:
             raise AuthorizationError("MFA_REQUIRED")
@@ -79,6 +92,7 @@ class BillingService:
         idempotency_key: str,
         mfa_passed: bool = False,
     ) -> None:
+        self._enforce_mutation_rate_limits(actor)
         self._require_permission(actor, "billing:write")
         if not mfa_passed:
             raise AuthorizationError("MFA_REQUIRED")
@@ -116,6 +130,7 @@ class BillingService:
         reason: str,
         mfa_passed: bool = False,
     ) -> dict[str, str]:
+        self._enforce_mutation_rate_limits(actor)
         self._require_permission(actor, "billing:admin")
         if not mfa_passed:
             raise AuthorizationError("MFA_REQUIRED")
@@ -155,6 +170,21 @@ class BillingService:
     def _require_permission(self, actor: ActorContext, permission: str) -> None:
         if permission not in actor.permissions:
             raise AuthorizationError(f"Missing permission: {permission}")
+
+    def _enforce_mutation_rate_limits(self, actor: ActorContext) -> None:
+        try:
+            self.rate_limiter.enforce(
+                scope="billing:mutation:user",
+                key=actor.user_id,
+                rule=self._per_user_mutation_rule,
+            )
+            self.rate_limiter.enforce(
+                scope="billing:mutation:tenant",
+                key=actor.tenant_id,
+                rule=self._per_tenant_mutation_rule,
+            )
+        except ThrottledError as exc:
+            raise BillingThrottledError("BILLING_RATE_LIMITED") from exc
 
     def _audit(
         self,

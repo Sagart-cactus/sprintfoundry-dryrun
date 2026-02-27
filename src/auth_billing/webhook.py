@@ -6,8 +6,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from hashlib import sha256
 
+from .rate_limit import FixedWindowRateLimiter, RateLimitRule, ThrottledError
+
 
 class WebhookVerificationError(Exception):
+    pass
+
+
+class WebhookThrottledError(WebhookVerificationError):
     pass
 
 
@@ -27,15 +33,27 @@ class WebhookIngestService:
         signing_secret: str,
         timestamp_tolerance_seconds: int = 300,
         dedupe_ttl_days: int = 7,
+        rate_limiter: FixedWindowRateLimiter | None = None,
     ) -> None:
         self.signing_secret = signing_secret.encode("utf-8")
         self.timestamp_tolerance = timedelta(seconds=timestamp_tolerance_seconds)
         self.dedupe_ttl = timedelta(days=dedupe_ttl_days)
+        self.rate_limiter = rate_limiter or FixedWindowRateLimiter()
+        self._source_rate_limit_rule = RateLimitRule(limit=300, window_seconds=60)
         self._seen_events: dict[str, datetime] = {}
         self.envelopes: list[WebhookEnvelope] = []
         self.processing_queue: list[str] = []
 
-    def ingest(self, signature_header: str, body: str) -> dict[str, object]:
+    def ingest(self, signature_header: str, body: str, source_ip: str = "unknown") -> dict[str, object]:
+        try:
+            self.rate_limiter.enforce(
+                scope="webhook:ingest:source",
+                key=source_ip,
+                rule=self._source_rate_limit_rule,
+            )
+        except ThrottledError as exc:
+            raise WebhookThrottledError("WEBHOOK_RATE_LIMITED") from exc
+
         now = datetime.utcnow()
         timestamp, signature = self._parse_signature(signature_header)
         self._verify_timestamp(now, timestamp)
@@ -75,7 +93,10 @@ class WebhookIngestService:
             raise WebhookVerificationError("Malformed signature header") from exc
 
     def _verify_timestamp(self, now: datetime, timestamp: int) -> None:
-        signature_time = datetime.utcfromtimestamp(timestamp)
+        try:
+            signature_time = datetime.utcfromtimestamp(timestamp)
+        except (OverflowError, OSError, ValueError) as exc:
+            raise WebhookVerificationError("Malformed signature header") from exc
         if abs(now - signature_time) > self.timestamp_tolerance:
             raise WebhookVerificationError("Signature timestamp outside tolerance")
 
