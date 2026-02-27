@@ -1,0 +1,21 @@
+name: DevOps Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  smoke:
+    name: Smoke
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Validate repository basics
+        run: |
+          test -f README.md
+          test -f .agent-task.md
+          echo "Smoke checks passed"
