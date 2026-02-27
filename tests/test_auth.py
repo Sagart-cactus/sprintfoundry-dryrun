@@ -25,6 +25,15 @@ class AuthSessionServiceTests(unittest.TestCase):
         with self.assertRaises(AuthError):
             service.refresh(next_token)
 
+    def test_logout_revokes_refresh_token(self) -> None:
+        service = AuthSessionService()
+        token = service.issue_refresh_token(user_id="user-1", tenant_id="tenant-a")
+
+        service.logout(token)
+
+        with self.assertRaises(AuthError):
+            service.refresh(token)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -41,7 +41,10 @@ class WebhookIngestService:
         self._verify_timestamp(now, timestamp)
         self._verify_signature(timestamp, body, signature)
 
-        payload = json.loads(body)
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise WebhookVerificationError("Malformed payload") from exc
         event_id = str(payload.get("id", ""))
         if not event_id:
             raise WebhookVerificationError("Missing event id")
@@ -66,7 +69,10 @@ class WebhookIngestService:
         pairs = dict(part.split("=", maxsplit=1) for part in signature_header.split(",") if "=" in part)
         if "t" not in pairs or "v1" not in pairs:
             raise WebhookVerificationError("Malformed signature header")
-        return int(pairs["t"]), pairs["v1"]
+        try:
+            return int(pairs["t"]), pairs["v1"]
+        except ValueError as exc:
+            raise WebhookVerificationError("Malformed signature header") from exc
 
     def _verify_timestamp(self, now: datetime, timestamp: int) -> None:
         signature_time = datetime.utcfromtimestamp(timestamp)

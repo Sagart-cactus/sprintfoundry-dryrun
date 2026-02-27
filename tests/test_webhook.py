@@ -44,6 +44,23 @@ class WebhookIngestServiceTests(unittest.TestCase):
         with self.assertRaises(WebhookVerificationError):
             service.ingest(sig, body)
 
+    def test_malformed_signature_timestamp_rejected(self) -> None:
+        service = WebhookIngestService(signing_secret="whsec_test")
+        body = json.dumps({"id": "evt_4", "type": "invoice.paid"})
+        sig = "t=not-a-number,v1=abcd"
+
+        with self.assertRaisesRegex(WebhookVerificationError, "Malformed signature header"):
+            service.ingest(sig, body)
+
+    def test_malformed_json_payload_rejected(self) -> None:
+        service = WebhookIngestService(signing_secret="whsec_test")
+        body = '{"id":"evt_5",'
+        ts = int(time())
+        sig = make_signature("whsec_test", body, ts)
+
+        with self.assertRaisesRegex(WebhookVerificationError, "Malformed payload"):
+            service.ingest(sig, body)
+
 
 if __name__ == "__main__":
     unittest.main()

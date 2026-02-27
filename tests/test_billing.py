@@ -38,6 +38,15 @@ class BillingServiceTests(unittest.TestCase):
                 mfa_passed=True,
             )
 
+    def test_mfa_required_for_payment_method_add(self) -> None:
+        with self.assertRaises(AuthorizationError):
+            self.service.add_payment_method(
+                actor=self.writer,
+                idempotency_key="m" * 16,
+                provider_token="provider-token",
+                mfa_passed=False,
+            )
+
     def test_idempotency_duplicate_request_returns_same_response(self) -> None:
         first = self.service.add_payment_method(
             actor=self.writer,
