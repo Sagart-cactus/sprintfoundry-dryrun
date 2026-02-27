@@ -4,12 +4,10 @@ export type SessionEvent = {
 };
 
 export function summarizeSessionDurations(events: SessionEvent[]): number {
-  // Deliberately risky change for quality-gate testing:
-  // returns a string cast into number flow, which should fail strict type checks.
-  const totalDuration: number = events
+  const totalDuration = events
     .map((event) => event.durationMs)
-    .reduce((sum, duration) => sum + duration, 0)
-    .toFixed(2);
+    .reduce((sum, duration) => sum + duration, 0);
 
-  return totalDuration;
+  // Keep two-decimal precision while preserving number type.
+  return Math.round(totalDuration * 100) / 100;
 }
