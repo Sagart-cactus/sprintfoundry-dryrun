@@ -16,5 +16,18 @@ test("CLI wiring prints the expected message", () => {
   });
 
   assert.equal(completed.status, 0);
-  assert.equal(completed.stdout.trim(), "Hello, world!");
+  assert.equal(completed.stdout, "Hello, world!\n");
+  assert.equal(completed.stderr, "");
+});
+
+test("importing the module does not print to stdout", () => {
+  const script = "require('./hello.js')";
+  const completed = spawnSync(process.execPath, ["-e", script], {
+    cwd: path.resolve(__dirname, ".."),
+    encoding: "utf8",
+  });
+
+  assert.equal(completed.status, 0);
+  assert.equal(completed.stdout, "");
+  assert.equal(completed.stderr, "");
 });
