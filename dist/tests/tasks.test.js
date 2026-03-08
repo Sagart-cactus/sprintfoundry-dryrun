@@ -34,6 +34,12 @@ const app_1 = require("../src/app");
         (0, vitest_1.expect)(response.status).toBe(400);
         (0, vitest_1.expect)(response.body.error.code).toBe("VALIDATION_ERROR");
     });
+    (0, vitest_1.it)("returns 400 when create body is not an object", async () => {
+        const app = (0, app_1.createApp)();
+        const response = await (0, supertest_1.default)(app).post("/tasks").send([]);
+        (0, vitest_1.expect)(response.status).toBe(400);
+        (0, vitest_1.expect)(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
     (0, vitest_1.it)("gets task by id", async () => {
         const app = (0, app_1.createApp)();
         const created = await (0, supertest_1.default)(app).post("/tasks").send({ title: "Find me" });
@@ -67,12 +73,29 @@ const app_1 = require("../src/app");
         (0, vitest_1.expect)(response.status).toBe(409);
         (0, vitest_1.expect)(response.body.error.code).toBe("INVALID_STATUS_TRANSITION");
     });
+    (0, vitest_1.it)("rejects invalid status values", async () => {
+        const app = (0, app_1.createApp)();
+        const created = await (0, supertest_1.default)(app).post("/tasks").send({ title: "Validate status" });
+        const response = await (0, supertest_1.default)(app).patch(`/tasks/${created.body.task.id}`).send({
+            status: "blocked"
+        });
+        (0, vitest_1.expect)(response.status).toBe(400);
+        (0, vitest_1.expect)(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
     (0, vitest_1.it)("rejects invalid patch payload", async () => {
         const app = (0, app_1.createApp)();
         const created = await (0, supertest_1.default)(app).post("/tasks").send({ title: "Patch me" });
         const response = await (0, supertest_1.default)(app).patch(`/tasks/${created.body.task.id}`).send({});
         (0, vitest_1.expect)(response.status).toBe(400);
         (0, vitest_1.expect)(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
+    (0, vitest_1.it)("returns 404 for updating a missing task", async () => {
+        const app = (0, app_1.createApp)();
+        const response = await (0, supertest_1.default)(app).patch("/tasks/7f33286b-4a9f-4d0a-a7ff-2e4e056f44ca").send({
+            title: "Should fail"
+        });
+        (0, vitest_1.expect)(response.status).toBe(404);
+        (0, vitest_1.expect)(response.body.error.code).toBe("NOT_FOUND");
     });
     (0, vitest_1.it)("deletes a task", async () => {
         const app = (0, app_1.createApp)();
@@ -82,10 +105,22 @@ const app_1 = require("../src/app");
         const getResponse = await (0, supertest_1.default)(app).get(`/tasks/${created.body.task.id}`);
         (0, vitest_1.expect)(getResponse.status).toBe(404);
     });
+    (0, vitest_1.it)("returns 404 when deleting a missing task", async () => {
+        const app = (0, app_1.createApp)();
+        const response = await (0, supertest_1.default)(app).delete("/tasks/7f33286b-4a9f-4d0a-a7ff-2e4e056f44ca");
+        (0, vitest_1.expect)(response.status).toBe(404);
+        (0, vitest_1.expect)(response.body.error.code).toBe("NOT_FOUND");
+    });
     (0, vitest_1.it)("returns 400 for non-uuid task id", async () => {
         const app = (0, app_1.createApp)();
         const response = await (0, supertest_1.default)(app).get("/tasks/not-a-uuid");
         (0, vitest_1.expect)(response.status).toBe(400);
         (0, vitest_1.expect)(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
+    (0, vitest_1.it)("returns 404 for unknown endpoint", async () => {
+        const app = (0, app_1.createApp)();
+        const response = await (0, supertest_1.default)(app).get("/unknown");
+        (0, vitest_1.expect)(response.status).toBe(404);
+        (0, vitest_1.expect)(response.body.error.code).toBe("NOT_FOUND");
     });
 });

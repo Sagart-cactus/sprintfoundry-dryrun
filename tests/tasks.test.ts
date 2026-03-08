@@ -43,6 +43,15 @@ describe("Task Management API", () => {
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 
+  it("returns 400 when create body is not an object", async () => {
+    const app = createApp();
+
+    const response = await request(app).post("/tasks").send([]);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
   it("gets task by id", async () => {
     const app = createApp();
     const created = await request(app).post("/tasks").send({ title: "Find me" });
@@ -88,6 +97,18 @@ describe("Task Management API", () => {
     expect(response.body.error.code).toBe("INVALID_STATUS_TRANSITION");
   });
 
+  it("rejects invalid status values", async () => {
+    const app = createApp();
+    const created = await request(app).post("/tasks").send({ title: "Validate status" });
+
+    const response = await request(app).patch(`/tasks/${created.body.task.id}`).send({
+      status: "blocked"
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
   it("rejects invalid patch payload", async () => {
     const app = createApp();
     const created = await request(app).post("/tasks").send({ title: "Patch me" });
@@ -96,6 +117,17 @@ describe("Task Management API", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("returns 404 for updating a missing task", async () => {
+    const app = createApp();
+
+    const response = await request(app).patch("/tasks/7f33286b-4a9f-4d0a-a7ff-2e4e056f44ca").send({
+      title: "Should fail"
+    });
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("NOT_FOUND");
   });
 
   it("deletes a task", async () => {
@@ -109,6 +141,15 @@ describe("Task Management API", () => {
     expect(getResponse.status).toBe(404);
   });
 
+  it("returns 404 when deleting a missing task", async () => {
+    const app = createApp();
+
+    const response = await request(app).delete("/tasks/7f33286b-4a9f-4d0a-a7ff-2e4e056f44ca");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("NOT_FOUND");
+  });
+
   it("returns 400 for non-uuid task id", async () => {
     const app = createApp();
 
@@ -116,5 +157,14 @@ describe("Task Management API", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("returns 404 for unknown endpoint", async () => {
+    const app = createApp();
+
+    const response = await request(app).get("/unknown");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("NOT_FOUND");
   });
 });

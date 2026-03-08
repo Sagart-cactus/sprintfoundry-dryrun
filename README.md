@@ -38,6 +38,7 @@ The server starts on `http://localhost:3000` by default.
 - `npm run build` - compile TypeScript into `dist/`
 - `npm run typecheck` - run TypeScript checks
 - `npm test` - run unit tests
+- `npm run test:coverage` - run unit tests with coverage reports (written to `artifacts/coverage/`)
 
 ## API Usage
 
@@ -104,3 +105,10 @@ curl -X DELETE http://localhost:3000/tasks/<task-id>
   }
 }
 ```
+
+## QA Artifacts
+
+- OpenAPI contract: `artifacts/api-contracts.yaml`
+- Product spec: `artifacts/product-spec.md`
+- User stories: `artifacts/user-stories.md`
+- Coverage output directory: `artifacts/coverage/`
